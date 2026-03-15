@@ -1,9 +1,10 @@
-import Image from "next/image";
+"use client"
+import { ChatInputBox } from "./_components/ChatInputBox"
 
 export default function Home() {
   return (
-   <div>
-    <h1>Fusion AI</h1>
-   </div>
+    <div>
+      <ChatInputBox />
+    </div>
   );
 }
