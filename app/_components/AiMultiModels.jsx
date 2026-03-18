@@ -27,9 +27,9 @@ export const AiMultiModels = () => {
         <div className='flex flex-1 h-[75vh] border-b'>
 
             {
-                aiModelList.map((model, index) => (
-                    <div className={`   flex flex-col border-r h-full overflow-auto ${model.enable ? 'flex-1 min-w-[400px]' : 'w-[100px] flex-none'}`}>
-                        <div key={index} className='w-full flex items-center justify-between border-b p-4 h-[70px]'>
+                aiModelList.map((model) => (
+                    <div key={model.model} className={`flex flex-col border-r h-full overflow-auto ${model.enable ? 'flex-1 min-w-[400px]' : 'w-[100px] flex-none'}`}>
+                        <div className='w-full flex items-center justify-between border-b p-4 h-[70px]'>
                             <div className='flex items-center gap-4 '>
                                 <Image src={model.icon} alt={model.model} width={24} height={24} />
                                 {
@@ -39,8 +39,8 @@ export const AiMultiModels = () => {
                                                 <SelectValue placeholder={model.subModel[0].name} />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {model.subModel.map((subModel, subIndex) => (
-                                                    <SelectItem key={subIndex} value={subModel.name}>
+                                                {model.subModel.map((subModel) => (
+                                                    <SelectItem key={subModel.id} value={subModel.name}>
                                                         {subModel.name}
                                                     </SelectItem>
                                                 ))}
