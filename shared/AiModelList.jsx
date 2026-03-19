@@ -2,7 +2,7 @@ export default [
   {
     model: "GPT",
     icon: "/gpt.png",
-    premium: true,
+    premium: false,
     enable: true,
     subModel: [
       { name: "GPT 3.5", premium: false, id: "gpt-3.5" },
@@ -28,7 +28,7 @@ export default [
   {
     model: "Deepseek",
     icon: "/deepseek.png",
-    premium: true,
+    premium: false,
     enable: true,
     subModel: [
       { name: "Deepseek R1", premium: false, id: "DeepSeek-R1" },
@@ -58,7 +58,7 @@ export default [
   {
     model: "Cohere",
     icon: "/cohere.png",
-    premium: false,
+    premium: true,
     enable: true,
     subModel: [
       { name: "Cohere Command A", premium: false, id: "cohere-command-a" },
@@ -71,8 +71,8 @@ export default [
     premium: true,
     enable: true,
     subModel: [
-      { name: "Llama 3.3 70B Instruct", premium: true, id: "llama-3.3-70B-Instruct" },
-      { name: "Llama 4 Scout 17B 16E Instruct", premium: true, id: "llama-4-Scout-17B-16E-Instruct" }
+      { name: "Llama 3.3 70B Instruct", premium: false, id: "Llama-3.3-70B-Instruct" },
+      { name: "Llama 4 Scout 17B 16E Instruct", premium: true, id: "Llama-4-Scout-17B-16E-Instruct" }
     ]
   }
 ];
