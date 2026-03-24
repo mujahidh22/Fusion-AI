@@ -17,7 +17,9 @@ export const ChatInputBox = () => {
         setMessages((prev) => {
             const updated = { ...prev };
             Object.keys(aiSelectedModels || {}).forEach((modelKey) => {
-                updated[modelKey] = [...(updated[modelKey] ?? []), { role: "user", content: userInput }];
+                if(aiSelectedModels[modelKey].enable === true){
+                    updated[modelKey] = [...(updated[modelKey] ?? []), { role: "user", content: userInput }];
+                }
             });
             return updated;
         });
@@ -27,7 +29,8 @@ export const ChatInputBox = () => {
 
         // Fetch response from each enabled model
         Object.entries(aiSelectedModels || {}).forEach(async ([parentModel, modelInfo]) => {
-            if (!modelInfo.modelId) return;
+
+            if (!modelInfo.modelId || aiSelectedModels[parentModel].enable === false) return;
 
             // Add loading placeholder before API call
             setMessages((prev) => ({
@@ -94,7 +97,13 @@ export const ChatInputBox = () => {
             {/* Fixed Chat Input */}
             <div className='fixed bottom-0 left-0 w-full flex justify-center px-4 pb-4'>
                 <div className='w-full border rounded-xl shadow-md max-w-2xl p-4'>
-                    <input type="text" placeholder='Ask me anything...' className='border-0 outline-none' value={userInput} onChange={(e) => setUserInput(e.target.value)} />
+                    <input type="text"
+                        placeholder='Ask me anything...'
+                        className='border-0 outline-none w-full'
+                        value={userInput}
+                        onChange={(e) => setUserInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                    />
                     <div className='mt-3 flex justify-between items-center'>
                         <Button className='' variant={'ghost'} size={'icon'}>
                             <Paperclip className='h-5 w-5' />

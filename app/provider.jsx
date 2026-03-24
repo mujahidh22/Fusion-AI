@@ -6,7 +6,7 @@ import AppSidebar from './_components/AppSidebar'
 import { AppHeader } from './_components/AppHeader'
 import { useUser } from '@clerk/nextjs'
 import { db } from '@/config/FirebaseConfig'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 import { AiSelectedModelContext } from '@/context/AiSelectedModelContext'
 import { DefaultModel } from '@/shared/AiModelsShared'
 import { UserDetailContext } from '@/context/UserDetailContext'
@@ -23,6 +23,19 @@ function Provider({ children, ...props }) {
             CreateNewUser();
         }
     }, [user])
+
+    useEffect(() => {
+        if (aiSelectedModels) {
+            //update to firebase db
+            updateAiModelSelection()
+        }
+    }, [aiSelectedModels])
+
+    const updateAiModelSelection = async () => {
+        //update to Firebase db
+        const docRef = doc(db, 'user', user?.primaryEmailAddress?.emailAddress);
+        await updateDoc(docRef, { selectedModelPref: aiSelectedModels })
+    }
 
     const CreateNewUser = async () => {
         // Initialize a reference to a specific document in the 'user' collection

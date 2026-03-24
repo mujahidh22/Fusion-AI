@@ -13,29 +13,40 @@ import {
 } from "@/components/ui/select"
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
-import { Lock, MessageSquare } from 'lucide-react'
+import { Loader, Lock, MessageSquare } from 'lucide-react'
 import { AiSelectedModelContext } from '@/context/AiSelectedModelContext'
 import { doc, updateDoc } from 'firebase/firestore'
 import { useUser } from '@clerk/nextjs'
 import { db } from '@/config/FirebaseConfig'
+import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 export const AiMultiModels = () => {
     const { user } = useUser()
     const [aiModelList, setAiModelList] = useState(AiModelList)
-    const { aiSelectedModels, setAiSelectedModels } = useContext(AiSelectedModelContext)
+    const { messages, setMessages, aiSelectedModels, setAiSelectedModels } = useContext(AiSelectedModelContext)
+
 
     const handleToggleChange = (model, value) => {
         setAiModelList((prev) =>
             prev.map((m) => m.model === model ? { ...m, enable: value } : m)
         )
+
+        setAiSelectedModels((prev) => ({
+            ...prev,
+            [model]: {
+                ...(prev?.[model] ?? {}),
+                enable: value
+            }
+        }))
     }
 
     const handleModelChange = async (parentModel, value) => {
         setAiSelectedModels((prev) => ({ ...prev, [parentModel]: { modelId: value } }))
 
-        //update to Firebase db
-        const docRef = doc(db, 'user', user?.primaryEmailAddress?.emailAddress);
-        await updateDoc(docRef, { selectedModelPref: aiSelectedModels })
+        // //update to Firebase db
+        // const docRef = doc(db, 'user', user?.primaryEmailAddress?.emailAddress);
+        // await updateDoc(docRef, { selectedModelPref: aiSelectedModels })
 
     }
 
@@ -85,11 +96,42 @@ export const AiMultiModels = () => {
                                 }
                             </div>
                         </div>
+
                         {model.enable && model.premium &&
                             <div className='flex justify-center items-center h-[calc(100%-70px)]'>
                                 <Button> <Lock />Upgrade to Unlock</Button>
                             </div>
                         }
+
+                        {model.enable && (
+                            <div className='flex-1 p-4'>
+                                <div className='flex-1 p-4 space-y-2'>
+                                    {
+                                        messages[model.model]?.map((msg, index) => (
+                                            <div key={index} className={`p-2 rounded-md ${msg.role === 'user' ? 'bg-blue-100 text-blue-900' : 'bg-gray-100 text-gray-900'}`}>
+                                                {
+                                                    msg.role === 'assistant' && (
+                                                        <span className='text-sm text-gray-400'>{msg.model ?? model.model}</span>
+                                                    )
+                                                }
+                                                {msg.loading &&
+                                                    <>
+                                                        <Loader className='animate-spin' />
+                                                        <span> Thinking...</span>
+                                                    </>
+                                                }
+                                                {!msg.loading &&
+                                                    <Markdown remarkPlugins={[remarkGfm]}>
+                                                        {msg.content}
+                                                    </Markdown>
+                                                }
+                                            </div>
+                                        ))
+                                    }
+                                </div>
+                            </div>
+                        )}
+
                     </div>
                 ))
             }
