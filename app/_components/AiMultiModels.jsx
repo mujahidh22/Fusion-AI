@@ -50,9 +50,9 @@ export const AiMultiModels = () => {
                                 <Image src={model.icon} alt={model.model} width={24} height={24} />
                                 {
                                     model.enable && (
-                                        <Select defaultValue={aiSelectedModels[model.model].modelId} onValueChange={(value) => handleModelChange(model.model, value)} disabled={model.premium === true}>
+                                        <Select defaultValue={aiSelectedModels?.[model.model]?.modelId || ""} onValueChange={(value) => handleModelChange(model.model, value)} disabled={model.premium === true}>
                                             <SelectTrigger className='w-[180px]'>
-                                                <SelectValue placeholder={aiSelectedModels[model.model].modelId} />
+                                                <SelectValue placeholder={aiSelectedModels?.[model.model]?.modelId || "Select Model"} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectGroup className='px-3'>

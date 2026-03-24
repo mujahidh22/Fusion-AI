@@ -16,6 +16,7 @@ function Provider({ children, ...props }) {
     const { user } = useUser();
     const [aiSelectedModels, setAiSelectedModels] = useState(DefaultModel)
     const [userDetail, setUserDetail] = useState()
+    const [messages, setMessages] = useState({})
 
     useEffect(() => {
         if (user) {
@@ -35,7 +36,7 @@ function Provider({ children, ...props }) {
         if (userSnap.exists()) {
             console.log("User already exist")
             const userInfo = userSnap.data()
-            setAiSelectedModels(userInfo?.selectedModelPref)
+            setAiSelectedModels(userInfo?.selectedModelPref ?? DefaultModel)
             setUserDetail(userInfo);
             return
         }
@@ -64,7 +65,7 @@ function Provider({ children, ...props }) {
             {...props}
         >
             <UserDetailContext.Provider value={{ userDetail, setUserDetail }}>
-                <AiSelectedModelContext.Provider value={{ aiSelectedModels, setAiSelectedModels }}>
+                <AiSelectedModelContext.Provider value={{ aiSelectedModels, setAiSelectedModels, messages, setMessages }}>
                     <SidebarProvider>
                         <AppSidebar />
                         <div className='w-full'>
