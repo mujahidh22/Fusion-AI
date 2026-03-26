@@ -1,15 +1,16 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { ThemeProvider as NextThemesProvider } from "next-themes"
 import { SidebarProvider } from '@/components/ui/sidebar'
 import AppSidebar from './_components/AppSidebar'
 import { AppHeader } from './_components/AppHeader'
 import { useUser } from '@clerk/nextjs'
 import { db } from '@/config/FirebaseConfig'
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore'
 import { AiSelectedModelContext } from '@/context/AiSelectedModelContext'
 import { DefaultModel } from '@/shared/AiModelsShared'
 import { UserDetailContext } from '@/context/UserDetailContext'
+import { v4 as uuidv4 } from 'uuid'
 
 function Provider({ children, ...props }) {
 
@@ -17,6 +18,8 @@ function Provider({ children, ...props }) {
     const [aiSelectedModels, setAiSelectedModels] = useState(DefaultModel)
     const [userDetail, setUserDetail] = useState()
     const [messages, setMessages] = useState({})
+    const [chatId, setChatId] = useState(() => uuidv4())
+    const [chatHistory, setChatHistory] = useState([])
 
     useEffect(() => {
         if (user) {
@@ -69,6 +72,30 @@ function Provider({ children, ...props }) {
         }
     }
 
+    // Fetch chat history for the current user
+    const refreshChatHistory = useCallback(async () => {
+        if (!user?.primaryEmailAddress?.emailAddress) return;
+        const q = query(
+            collection(db, 'chatHistory'),
+            where('userEmail', '==', user.primaryEmailAddress.emailAddress)
+        )
+        const querySnapshot = await getDocs(q)
+        const history = []
+        querySnapshot.forEach((doc) => {
+            history.push(doc.data())
+        })
+        // Sort by lastUpdated descending (most recent first)
+        history.sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0))
+        setChatHistory(history)
+    }, [user])
+
+    // Load chat history when user is available
+    useEffect(() => {
+        if (user) {
+            refreshChatHistory()
+        }
+    }, [user, refreshChatHistory])
+
     return (
         <NextThemesProvider
             attribute="class"
@@ -78,7 +105,12 @@ function Provider({ children, ...props }) {
             {...props}
         >
             <UserDetailContext.Provider value={{ userDetail, setUserDetail }}>
-                <AiSelectedModelContext.Provider value={{ aiSelectedModels, setAiSelectedModels, messages, setMessages }}>
+                <AiSelectedModelContext.Provider value={{
+                    aiSelectedModels, setAiSelectedModels,
+                    messages, setMessages,
+                    chatId, setChatId,
+                    chatHistory, refreshChatHistory
+                }}>
                     <SidebarProvider>
                         <AppSidebar />
                         <div className='w-full'>

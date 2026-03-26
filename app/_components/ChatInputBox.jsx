@@ -1,14 +1,56 @@
 'use client'
 import { Button } from '@/components/ui/button'
 import { Mic, Paperclip, Send } from 'lucide-react'
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { AiMultiModels } from './AiMultiModels'
 import { AiSelectedModelContext } from '@/context/AiSelectedModelContext'
 import axios from 'axios'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { db } from '@/config/FirebaseConfig'
+import { useUser } from '@clerk/nextjs'
+import { useSearchParams } from 'next/navigation'
 
 export const ChatInputBox = () => {
     const [userInput, setUserInput] = useState('')
-    const { messages, setMessages, aiSelectedModels, setAiSelectedModels } = useContext(AiSelectedModelContext)
+    const {
+        messages, setMessages,
+        aiSelectedModels, setAiSelectedModels,
+        chatId, setChatId,
+        refreshChatHistory
+    } = useContext(AiSelectedModelContext)
+    const { user } = useUser()
+    const params = useSearchParams()
+
+    // Track whether we're currently loading a chat from Firestore
+    // to prevent the save useEffect from overwriting data
+    const isLoadingChat = useRef(false)
+
+    // When URL params change, either load an existing chat or keep the current new chat
+    useEffect(() => {
+        const chatIdFromParam = params.get('chatId')
+        if (chatIdFromParam) {
+            setChatId(chatIdFromParam)
+            loadChatMessages(chatIdFromParam)
+        }
+        // If no chatId param, we keep whatever chatId is already set (from provider)
+    }, [params])
+
+    // Load messages for a specific chat from Firestore
+    const loadChatMessages = async (id) => {
+        isLoadingChat.current = true
+        try {
+            const docRef = doc(db, 'chatHistory', id)
+            const docSnap = await getDoc(docRef)
+            if (docSnap.exists()) {
+                setMessages(docSnap.data().messages)
+            }
+        } finally {
+            // Small delay to let the state settle before allowing saves again
+            setTimeout(() => {
+                isLoadingChat.current = false
+            }, 500)
+        }
+    }
 
     const handleSend = async () => {
         if (!userInput.trim()) return;
@@ -17,7 +59,7 @@ export const ChatInputBox = () => {
         setMessages((prev) => {
             const updated = { ...prev };
             Object.keys(aiSelectedModels || {}).forEach((modelKey) => {
-                if(aiSelectedModels[modelKey].enable === true){
+                if (aiSelectedModels[modelKey].enable === true) {
                     updated[modelKey] = [...(updated[modelKey] ?? []), { role: "user", content: userInput }];
                 }
             });
@@ -84,9 +126,29 @@ export const ChatInputBox = () => {
         });
     };
 
+    // Save messages to Firestore whenever they change
     useEffect(() => {
-        console.log('messages:', messages)
+        // Don't save if:
+        // - chatId is missing
+        // - messages is empty
+        // - we're in the middle of loading a chat from Firestore
+        if (!chatId || !messages || Object.keys(messages).length === 0 || isLoadingChat.current) return;
+
+        handleSaveMessages()
     }, [messages])
+
+    const handleSaveMessages = async () => {
+        if (!chatId) return;
+        const docRef = doc(db, 'chatHistory', chatId);
+        await setDoc(docRef, {
+            chatId: chatId,
+            userEmail: user?.primaryEmailAddress?.emailAddress,
+            messages: messages,
+            lastUpdated: Date.now()
+        })
+        // Refresh sidebar chat history immediately after saving
+        refreshChatHistory()
+    }
 
     return (
         <div className='relative min-h-screen'>

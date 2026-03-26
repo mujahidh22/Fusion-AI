@@ -15,9 +15,7 @@ import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Loader, Lock, MessageSquare } from 'lucide-react'
 import { AiSelectedModelContext } from '@/context/AiSelectedModelContext'
-import { doc, updateDoc } from 'firebase/firestore'
 import { useUser } from '@clerk/nextjs'
-import { db } from '@/config/FirebaseConfig'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -25,7 +23,6 @@ export const AiMultiModels = () => {
     const { user } = useUser()
     const [aiModelList, setAiModelList] = useState(AiModelList)
     const { messages, setMessages, aiSelectedModels, setAiSelectedModels } = useContext(AiSelectedModelContext)
-
 
     const handleToggleChange = (model, value) => {
         setAiModelList((prev) =>
