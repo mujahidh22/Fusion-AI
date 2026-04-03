@@ -1,5 +1,6 @@
 'use client'
 import React, { useCallback, useEffect, useState } from 'react'
+import axios from 'axios'
 import { ThemeProvider as NextThemesProvider } from "next-themes"
 import { SidebarProvider } from '@/components/ui/sidebar'
 import AppSidebar from './_components/AppSidebar'
@@ -21,9 +22,21 @@ function Provider({ children, ...props }) {
     const [chatId, setChatId] = useState(() => uuidv4())
     const [chatHistory, setChatHistory] = useState([])
 
+    const [msgTokenCount, setMsgTokenCount] = useState(5)
+
+    const getRemainingMessagesCredit = async () => {
+        try {
+            const result = await axios.get('/api/user-remaining-msg')
+            setMsgTokenCount(result?.data?.remainingToken)
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
     useEffect(() => {
         if (user) {
             CreateNewUser();
+            getRemainingMessagesCredit();
         }
     }, [user])
 
@@ -104,7 +117,7 @@ function Provider({ children, ...props }) {
             disableTransitionOnChange
             {...props}
         >
-            <UserDetailContext.Provider value={{ userDetail, setUserDetail }}>
+            <UserDetailContext.Provider value={{ userDetail, setUserDetail, msgTokenCount, setMsgTokenCount }}>
                 <AiSelectedModelContext.Provider value={{
                     aiSelectedModels, setAiSelectedModels,
                     messages, setMessages,

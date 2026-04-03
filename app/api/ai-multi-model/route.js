@@ -1,10 +1,25 @@
 import axios from "axios";
 import { NextResponse } from "next/server";
+import { currentUser } from "@clerk/nextjs/server";
+import { aj } from "@/config/Arcjet";
 export async function POST(req) {
 
     const { message, model, parentModel } = await req.json();
 
     try {
+        const user = await currentUser();
+        const decision = await aj.protect(req, {
+            userId: user?.primaryEmailAddress?.emailAddress,
+            requested: 1
+        });
+
+        if (decision.isDenied()) {
+            return NextResponse.json(
+                { error: "Rate limit exceeded" },
+                { status: 429 }
+            );
+        }
+
         const response = await axios.post(
             "https://kravixstudio.com/api/v1/chat",
             {

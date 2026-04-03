@@ -9,6 +9,8 @@ import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
 import { useUser } from '@clerk/nextjs'
 import { useSearchParams } from 'next/navigation'
+import { UserDetailContext } from '@/context/UserDetailContext'
+import { toast } from 'sonner'
 
 export const ChatInputBox = () => {
     const [userInput, setUserInput] = useState('')
@@ -18,6 +20,7 @@ export const ChatInputBox = () => {
         chatId, setChatId,
         refreshChatHistory
     } = useContext(AiSelectedModelContext)
+    const { msgTokenCount, setMsgTokenCount } = useContext(UserDetailContext)
     const { user } = useUser()
     const params = useSearchParams()
 
@@ -55,6 +58,18 @@ export const ChatInputBox = () => {
     const handleSend = async () => {
         if (!userInput.trim()) return;
 
+        // check if user has sufficient credit
+        if (msgTokenCount < 1) {
+            toast("You don't have enough credits remaining", {
+                description: "Wait until the next refill to send more messages.",
+                action: {
+                    label: "Upgrade",
+                    onClick: () => console.log("Upgrade clicked")
+                }
+            });
+            return;
+        }
+
         // Add user message to all enabled models
         setMessages((prev) => {
             const updated = { ...prev };
@@ -68,6 +83,9 @@ export const ChatInputBox = () => {
 
         const currentInput = userInput; // capture before reset
         setUserInput("");
+
+        // Deduct 1 credit per user message (not per model)
+        setMsgTokenCount(prev => prev - 1);
 
         // Fetch response from each enabled model
         Object.entries(aiSelectedModels || {}).forEach(async ([parentModel, modelInfo]) => {

@@ -12,16 +12,15 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AiSelectedModelContext } from '@/context/AiSelectedModelContext'
 import { v4 as uuidv4 } from 'uuid'
+import axios from 'axios'
+import { UserDetailContext } from '@/context/UserDetailContext'
 
 function AppSidebar() {
     const { theme, setTheme } = useTheme()
     const { user } = useUser()
     const router = useRouter()
-    const {
-        chatHistory,
-        chatId, setChatId,
-        messages, setMessages
-    } = useContext(AiSelectedModelContext)
+    const { chatHistory, chatId, setChatId, messages, setMessages } = useContext(AiSelectedModelContext)
+    const { msgTokenCount } = useContext(UserDetailContext)
 
     const getlastUserMessageFromChat = (chat) => {
         const allMessages = Object.values(chat.messages).flat();
@@ -95,7 +94,7 @@ function AppSidebar() {
                             </SignInButton>
                             :
                             <div className='w-full'>
-                                <UserCreditProgress />
+                                <UserCreditProgress msgTokenCount={msgTokenCount} />
                                 <Button className='flex mb-3 w-full'>
                                     <Zap /> <h2>Upgrade to Pro</h2>
                                 </Button>
