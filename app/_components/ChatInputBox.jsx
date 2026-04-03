@@ -8,6 +8,7 @@ import axios from 'axios'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
 import { useUser } from '@clerk/nextjs'
+import { useSubscription } from '@/hooks/useSubscription'
 import { useSearchParams } from 'next/navigation'
 import { UserDetailContext } from '@/context/UserDetailContext'
 import { toast } from 'sonner'
@@ -23,6 +24,7 @@ export const ChatInputBox = () => {
     const { msgTokenCount, setMsgTokenCount } = useContext(UserDetailContext)
     const { user } = useUser()
     const params = useSearchParams()
+    const { isPaidUser } = useSubscription()
 
     // Track whether we're currently loading a chat from Firestore
     // to prevent the save useEffect from overwriting data
@@ -59,7 +61,7 @@ export const ChatInputBox = () => {
         if (!userInput.trim()) return;
 
         // check if user has sufficient credit
-        if (msgTokenCount < 1) {
+        if (msgTokenCount < 1 && !isPaidUser) {
             toast("You don't have enough credits remaining", {
                 description: "Wait until the next refill to send more messages.",
                 action: {

@@ -6,6 +6,7 @@ import { Sun, Moon, User2, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTheme } from 'next-themes'
 import { SignInButton, useUser } from '@clerk/nextjs'
+import { useSubscription } from '@/hooks/useSubscription'
 import { UserCreditProgress } from './UserCreditProgress'
 import moment from 'moment'
 import Link from 'next/link'
@@ -14,6 +15,7 @@ import { AiSelectedModelContext } from '@/context/AiSelectedModelContext'
 import { v4 as uuidv4 } from 'uuid'
 import axios from 'axios'
 import { UserDetailContext } from '@/context/UserDetailContext'
+import { PricingModal } from './PricingModal'
 
 function AppSidebar() {
     const { theme, setTheme } = useTheme()
@@ -21,6 +23,7 @@ function AppSidebar() {
     const router = useRouter()
     const { chatHistory, chatId, setChatId, messages, setMessages } = useContext(AiSelectedModelContext)
     const { msgTokenCount } = useContext(UserDetailContext)
+    const { isPaidUser } = useSubscription()
 
     const getlastUserMessageFromChat = (chat) => {
         const allMessages = Object.values(chat.messages).flat();
@@ -94,10 +97,17 @@ function AppSidebar() {
                             </SignInButton>
                             :
                             <div className='w-full'>
-                                <UserCreditProgress msgTokenCount={msgTokenCount} />
-                                <Button className='flex mb-3 w-full'>
-                                    <Zap /> <h2>Upgrade to Pro</h2>
-                                </Button>
+
+                                {!isPaidUser &&
+                                    <>
+                                        <UserCreditProgress msgTokenCount={msgTokenCount} />
+                                        <PricingModal>
+                                            <Button className='flex mb-3 w-full'>
+                                                <Zap /> <h2>Upgrade to Pro</h2>
+                                            </Button>
+                                        </PricingModal>
+                                    </>
+                                }
                                 <Button className='flex' variant='ghost'>
                                     <User2 /> <h2>Settings</h2>
                                 </Button>

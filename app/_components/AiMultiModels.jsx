@@ -18,11 +18,13 @@ import { AiSelectedModelContext } from '@/context/AiSelectedModelContext'
 import { useUser } from '@clerk/nextjs'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { useSubscription } from '@/hooks/useSubscription'
 
 export const AiMultiModels = () => {
     const { user } = useUser()
     const [aiModelList, setAiModelList] = useState(AiModelList)
     const { messages, setMessages, aiSelectedModels, setAiSelectedModels } = useContext(AiSelectedModelContext)
+    const { isPaidUser } = useSubscription();
 
     const handleToggleChange = (model, value) => {
         setAiModelList((prev) =>
@@ -94,7 +96,7 @@ export const AiMultiModels = () => {
                             </div>
                         </div>
 
-                        {model.enable && model.premium &&
+                        {!isPaidUser && model.enable && model.premium &&
                             <div className='flex justify-center items-center h-[calc(100%-70px)]'>
                                 <Button> <Lock />Upgrade to Unlock</Button>
                             </div>
