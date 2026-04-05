@@ -190,8 +190,8 @@ export const ChatInputBox = () => {
                 <AiMultiModels />
             </div>
             {/* Fixed Chat Input */}
-            <div className='fixed bottom-0 left-0 w-full flex justify-center px-4 pb-4'>
-                <div className='w-full border rounded-xl shadow-md max-w-2xl p-4 relative'>
+            <div className='fixed bottom-0 left-0 w-full flex justify-center px-4 pb-8'>
+                <div className='flex justify-between items-center w-full border rounded-xl shadow-md max-w-2xl p-4 relative'>
                     {!user && (
                         <div className='absolute inset-0 bg-background/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10'>
                             <p className='text-sm text-muted-foreground'>
@@ -207,10 +207,10 @@ export const ChatInputBox = () => {
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                         disabled={!user}
                     />
-                    <div className='mt-3 flex justify-between items-center'>
-                        <Button className='' variant={'ghost'} size={'icon'} disabled={!user}>
+                    <div className='flex justify-between items-center'>
+                        {/* <Button className='' variant={'ghost'} size={'icon'} disabled={!user}>
                             <Paperclip className='h-5 w-5' />
-                        </Button>
+                        </Button> */}
                         <div className='flex  gap-5'>
                             <Button variant={'ghost'} size={'icon'} disabled={!user}><Mic /></Button>
                             <Button size={'icon'} onClick={handleSend} disabled={!user}><Send /></Button>
