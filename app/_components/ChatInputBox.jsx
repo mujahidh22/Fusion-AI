@@ -4,6 +4,7 @@ import { Mic, Paperclip, Send } from 'lucide-react'
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import { AiMultiModels } from './AiMultiModels'
 import { AiSelectedModelContext } from '@/context/AiSelectedModelContext'
+import AiModelList from '@/shared/AiModelList'
 import axios from 'axios'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
@@ -60,17 +61,25 @@ export const ChatInputBox = () => {
     const handleSend = async () => {
         if (!userInput.trim()) return;
 
-        // check if user has sufficient credit
-        if (msgTokenCount < 1 && !isPaidUser) {
-            toast("You don't have enough credits remaining", {
-                description: "Wait until the next refill to send more messages.",
-                action: {
-                    label: "Upgrade",
-                    onClick: () => console.log("Upgrade clicked")
-                }
+        // Block unauthenticated users from sending messages
+        if (!user) {
+            toast.error("Please sign in to send messages", {
+                description: "You need to be logged in to chat with AI models.",
             });
             return;
         }
+
+        // check if user has sufficient credit
+        // if (msgTokenCount < 1 && !isPaidUser) {
+        //     toast("You don't have enough credits remaining", {
+        //         description: "Wait until the next refill to send more messages.",
+        //         action: {
+        //             label: "Upgrade",
+        //             onClick: () => console.log("Upgrade clicked")
+        //         }
+        //     });
+        //     return;
+        // }
 
         // Add user message to all enabled models
         setMessages((prev) => {
@@ -93,6 +102,10 @@ export const ChatInputBox = () => {
         Object.entries(aiSelectedModels || {}).forEach(async ([parentModel, modelInfo]) => {
 
             if (!modelInfo.modelId || aiSelectedModels[parentModel].enable === false) return;
+
+            // Skip premium models for free users — don't waste API calls
+            const modelDef = AiModelList.find(m => m.model === parentModel)
+            if (!isPaidUser && modelDef?.premium) return;
 
             // Add loading placeholder before API call
             setMessages((prev) => ({
@@ -178,25 +191,34 @@ export const ChatInputBox = () => {
             </div>
             {/* Fixed Chat Input */}
             <div className='fixed bottom-0 left-0 w-full flex justify-center px-4 pb-4'>
-                <div className='w-full border rounded-xl shadow-md max-w-2xl p-4'>
+                <div className='w-full border rounded-xl shadow-md max-w-2xl p-4 relative'>
+                    {!user && (
+                        <div className='absolute inset-0 bg-background/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10'>
+                            <p className='text-sm text-muted-foreground'>
+                                Please <span className='font-semibold text-foreground'>Sign In</span> to start chatting
+                            </p>
+                        </div>
+                    )}
                     <input type="text"
                         placeholder='Ask me anything...'
                         className='border-0 outline-none w-full'
                         value={userInput}
                         onChange={(e) => setUserInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                        disabled={!user}
                     />
                     <div className='mt-3 flex justify-between items-center'>
-                        <Button className='' variant={'ghost'} size={'icon'}>
+                        <Button className='' variant={'ghost'} size={'icon'} disabled={!user}>
                             <Paperclip className='h-5 w-5' />
                         </Button>
                         <div className='flex  gap-5'>
-                            <Button variant={'ghost'} size={'icon'}><Mic /></Button>
-                            <Button size={'icon'} onClick={handleSend}><Send /></Button>
+                            <Button variant={'ghost'} size={'icon'} disabled={!user}><Mic /></Button>
+                            <Button size={'icon'} onClick={handleSend} disabled={!user}><Send /></Button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
     )
 }

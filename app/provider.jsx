@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
 import { ThemeProvider as NextThemesProvider } from "next-themes"
-import { SidebarProvider } from '@/components/ui/sidebar'
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import AppSidebar from './_components/AppSidebar'
 import { AppHeader } from './_components/AppHeader'
 import { useUser } from '@clerk/nextjs'
@@ -10,18 +10,30 @@ import { db } from '@/config/FirebaseConfig'
 import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore'
 import { AiSelectedModelContext } from '@/context/AiSelectedModelContext'
 import { DefaultModel } from '@/shared/AiModelsShared'
+import AiModelList from '@/shared/AiModelList'
 import { UserDetailContext } from '@/context/UserDetailContext'
+import { useSubscription } from '@/hooks/useSubscription'
 import { v4 as uuidv4 } from 'uuid'
+
+// Helper: filter DefaultModel to only include non-premium parent models
+const getFreeModels = () => {
+    const premiumParents = new Set(AiModelList.filter(m => m.premium).map(m => m.model))
+    return Object.fromEntries(
+        Object.entries(DefaultModel).filter(([key]) => !premiumParents.has(key))
+    )
+}
 
 function Provider({ children, ...props }) {
 
     const { user } = useUser();
-    const [aiSelectedModels, setAiSelectedModels] = useState(DefaultModel)
+    const { isPaidUser } = useSubscription();
+    const [aiSelectedModels, setAiSelectedModels] = useState(() =>
+        isPaidUser ? DefaultModel : getFreeModels()
+    )
     const [userDetail, setUserDetail] = useState()
     const [messages, setMessages] = useState({})
     const [chatId, setChatId] = useState(() => uuidv4())
     const [chatHistory, setChatHistory] = useState([])
-
     const [msgTokenCount, setMsgTokenCount] = useState(5)
 
     const getRemainingMessagesCredit = async () => {
@@ -65,7 +77,18 @@ function Provider({ children, ...props }) {
         if (userSnap.exists()) {
             console.log("User already exist")
             const userInfo = userSnap.data()
-            setAiSelectedModels(userInfo?.selectedModelPref ?? DefaultModel)
+            const savedPref = userInfo?.selectedModelPref ?? DefaultModel
+            // For free users, filter out any premium models from saved preferences
+            if (!isPaidUser) {
+                const premiumParents = new Set(AiModelList.filter(m => m.premium).map(m => m.model))
+                const filtered = Object.fromEntries(
+                    Object.entries(savedPref).filter(([key]) => !premiumParents.has(key))
+                )
+                setAiSelectedModels(filtered)
+            } else {
+                // Paid users get all models — merge saved prefs with full DefaultModel
+                setAiSelectedModels({ ...DefaultModel, ...savedPref })
+            }
             setUserDetail(userInfo);
             return
         }
@@ -126,10 +149,10 @@ function Provider({ children, ...props }) {
                 }}>
                     <SidebarProvider>
                         <AppSidebar />
-                        <div className='w-full'>
+                        <SidebarInset>
                             <AppHeader />
                             {children}
-                        </div>
+                        </SidebarInset>
                     </SidebarProvider>
                 </AiSelectedModelContext.Provider>
             </UserDetailContext.Provider>

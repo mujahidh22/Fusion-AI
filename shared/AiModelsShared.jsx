@@ -2,8 +2,8 @@ export const DefaultModel = {
   "GPT": { modelId: "gpt-4.1-mini", enable: true },
   "Gemini": { modelId: "gemini-2.5-flash-lite", enable: true },
   "Deepseek": { modelId: "DeepSeek-R1", enable: true },
-  // "Mistral": { modelId: "Ministral-3b" },
-  // "Grok": { modelId: "grok-3-mini" },
-  // "Cohere": { modelId: "cohere-command-a" },
-  // "Llama": { modelId: "Llama-3.3-70B-Instruct" }
+  "Mistral": { modelId: "Ministral-3B", enable: true },
+  "Grok": { modelId: "grok-3-mini", enable: true },
+  "Cohere": { modelId: "cohere-command-a", enable: true },
+  "Llama": { modelId: "Llama-3.3-70B-Instruct", enable: true }
 };

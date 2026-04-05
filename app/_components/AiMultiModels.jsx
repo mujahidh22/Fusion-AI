@@ -22,11 +22,26 @@ import { useSubscription } from '@/hooks/useSubscription'
 
 export const AiMultiModels = () => {
     const { user } = useUser()
-    const [aiModelList, setAiModelList] = useState(AiModelList)
-    const { messages, setMessages, aiSelectedModels, setAiSelectedModels } = useContext(AiSelectedModelContext)
     const { isPaidUser } = useSubscription();
 
+    // If paid user, enable all models. Otherwise use the defaults from AiModelList (premium = disabled).
+    const [aiModelList, setAiModelList] = useState(() =>
+        AiModelList.map(m => ({
+            ...m,
+            enable: isPaidUser ? true : m.enable
+        }))
+    )
+    const { messages, setMessages, aiSelectedModels, setAiSelectedModels } = useContext(AiSelectedModelContext)
+
     const handleToggleChange = (model, value) => {
+        // Find model info to check if it's premium
+        const modelInfo = AiModelList.find(m => m.model === model)
+
+        // Free users cannot enable premium model panels
+        if (!isPaidUser && modelInfo?.premium && value === true) {
+            return;
+        }
+
         setAiModelList((prev) =>
             prev.map((m) => m.model === model ? { ...m, enable: value } : m)
         )
@@ -41,16 +56,17 @@ export const AiMultiModels = () => {
     }
 
     const handleModelChange = async (parentModel, value) => {
-        setAiSelectedModels((prev) => ({ ...prev, [parentModel]: { modelId: value } }))
-
-        // //update to Firebase db
-        // const docRef = doc(db, 'user', user?.primaryEmailAddress?.emailAddress);
-        // await updateDoc(docRef, { selectedModelPref: aiSelectedModels })
-
+        setAiSelectedModels((prev) => ({
+            ...prev,
+            [parentModel]: {
+                ...(prev?.[parentModel] ?? {}),
+                modelId: value
+            }
+        }))
     }
 
     return (
-        <div className='flex flex-1 h-[75vh] border-b'>
+        <div className='flex flex-1 h-[75vh] border-b overflow-x-auto'>
 
             {
                 aiModelList.map((model) => (
@@ -60,7 +76,7 @@ export const AiMultiModels = () => {
                                 <Image src={model.icon} alt={model.model} width={24} height={24} />
                                 {
                                     model.enable && (
-                                        <Select defaultValue={aiSelectedModels?.[model.model]?.modelId || ""} onValueChange={(value) => handleModelChange(model.model, value)} disabled={model.premium === true}>
+                                        <Select defaultValue={aiSelectedModels?.[model.model]?.modelId || ""} onValueChange={(value) => handleModelChange(model.model, value)} disabled={!isPaidUser && model.premium === true}>
                                             <SelectTrigger className='w-[180px]'>
                                                 <SelectValue placeholder={aiSelectedModels?.[model.model]?.modelId || "Select Model"} />
                                             </SelectTrigger>
@@ -76,8 +92,8 @@ export const AiMultiModels = () => {
                                                 <SelectGroup className='px-3'>
                                                     <SelectLabel className='text-sm text-gray-400'>Premium</SelectLabel>
                                                     {model.subModel.map((subModel) => subModel.premium === true && (
-                                                        <SelectItem key={subModel.id} value={subModel.name} disabled={subModel.premium}>
-                                                            {subModel.name}{subModel.premium && <Lock className='h-4 w-4' />}
+                                                        <SelectItem key={subModel.id} value={subModel.id} disabled={!isPaidUser && subModel.premium}>
+                                                            {subModel.name}{!isPaidUser && subModel.premium && <Lock className='h-4 ml-2 w-4 inline' />}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectGroup>
