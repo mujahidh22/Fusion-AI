@@ -70,16 +70,16 @@ export const ChatInputBox = () => {
         }
 
         // check if user has sufficient credit
-        // if (msgTokenCount < 1 && !isPaidUser) {
-        //     toast("You don't have enough credits remaining", {
-        //         description: "Wait until the next refill to send more messages.",
-        //         action: {
-        //             label: "Upgrade",
-        //             onClick: () => console.log("Upgrade clicked")
-        //         }
-        //     });
-        //     return;
-        // }
+        if (msgTokenCount < 1 && !isPaidUser) {
+            toast("You don't have enough credits remaining", {
+                description: "Wait until the next refill to send more messages.",
+                action: {
+                    label: "Upgrade",
+                    onClick: () => console.log("Upgrade clicked")
+                }
+            });
+            return;
+        }
 
         // Add user message to all enabled models
         setMessages((prev) => {
